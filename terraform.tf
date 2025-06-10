@@ -1,5 +1,5 @@
 provider "aws" {
-  region = "us-east-2"
+  region = "us-east-1"
 }
 
 # S3 bucket for terraform state
@@ -7,7 +7,7 @@ resource "aws_s3_bucket" "tf_state" {
   bucket = "sagar-demo-bucket-0012" # Must be globally unique
 
   tags = {
-    Name = "Terraform State Bucket"
+    Name = "Terraform State Bucket from sagar"
   }
 }
 
