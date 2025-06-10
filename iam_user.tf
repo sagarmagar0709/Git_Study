@@ -1,49 +1,54 @@
-provider "aws" {
-  region = "us-east-1"
-}
-
-# 1. Create IAM User
 resource "aws_iam_user" "terraform_user" {
-  name = "terraform-state-user"
+  name = "terraform-user"
 }
 
-# 2. Create IAM Policy for S3 & DynamoDB access
-resource "aws_iam_policy" "terraform_state_access" {
-  name        = "TerraformStateAccessPolicy"
-  description = "Access to private S3 bucket and DynamoDB for state management"
+resource "aws_iam_user_policy" "terraform_state_access" {
+  name = "TerraformStateAccess"
+  user = aws_iam_user.terraform_user.name
 
   policy = jsonencode({
     Version = "2012-10-17",
     Statement = [
       {
-        Sid      = "AllowReadWriteTerraformState",
-        Effect   = "Allow",
-        Action   = [
+        Effect = "Allow",
+        Action = [
+          "s3:ListBucket",
           "s3:GetObject",
-          "s3:PutObject",
-          "s3:ListBucket"
+          "s3:PutObject"
         ],
         Resource = [
           "arn:aws:s3:::sagar-demo-bucket-0012",
-          "arn:aws:s3:::sagar-demo-bucket-0012/terraform.tfstate"
+          "arn:aws:s3:::sagar-demo-bucket-0012/*"
         ]
       },
       {
-        Sid    = "AllowDynamoDBStateLocking",
         Effect = "Allow",
         Action = [
-          "dynamodb:GetItem",
           "dynamodb:PutItem",
-          "dynamodb:DeleteItem"
+          "dynamodb:GetItem",
+          "dynamodb:DeleteItem",
+          "dynamodb:Scan",
+          "dynamodb:Query",
+          "dynamodb:UpdateItem"
         ],
-        Resource = "arn:aws:dynamodb:us-east-1:364337333456:table/terraform-locks"
+        Resource = "arn:aws:dynamodb:us-east-1:${data.aws_caller_identity.current.account_id}:table/terraform-locks"
       }
     ]
   })
 }
 
-# 3. Attach Policy to IAM User
-resource "aws_iam_user_policy_attachment" "attach_policy" {
-  user       = aws_iam_user.terraform_user.name
-  policy_arn = aws_iam_policy.terraform_state_access.arn
+resource "aws_iam_access_key" "terraform_user_key" {
+  user = aws_iam_user.terraform_user.name
+}
+
+data "aws_caller_identity" "current" {}
+
+output "terraform_access_key_id" {
+  value     = aws_iam_access_key.terraform_user_key.id
+  sensitive = true
+}
+
+output "terraform_secret_access_key" {
+  value     = aws_iam_access_key.terraform_user_key.secret
+  sensitive = true
 }
