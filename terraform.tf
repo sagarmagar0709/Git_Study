@@ -4,7 +4,7 @@ provider "aws" {
 
 # S3 bucket for terraform state
 resource "aws_s3_bucket" "tf_state" {
-  bucket = "sagar-demo-bucket-001" # Must be globally unique
+  bucket = "sagar-demo-bucket-0012" # Must be globally unique
 
   tags = {
     Name = "Terraform State Bucket"
